@@ -30,8 +30,21 @@ RUN yarn --cwd ./web/source install && \
 # stage 3: build the executor container
 FROM --platform=${TARGETPLATFORM} alpine:3.17.2 as executor
 
+# set up gotosocial user:group
+ARG GTS_UID=1000
+ARG GTS_GID=1000
+RUN addgroup -g $GTS_GID -S gotosocial && \
+    adduser -S -H -u $GTS_UID -G gotosocial gotosocial
+
+# install setpriv for running as non-root, and shadow for usermod/groupmod
+RUN apk add --no-cache setpriv shadow
+
+# copy entrypoint script
+COPY entrypoint.sh /usr/local/bin
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # switch to non-root user:group for GtS
-USER 1000:1000
+USER gotosocial:gotosocial
 
 # Because we're doing multi-arch builds we can't easily do `RUN mkdir [...]`
 # but we can hack around that by having docker's WORKDIR make the dirs for
@@ -39,17 +52,21 @@ USER 1000:1000
 #
 # See https://docs.docker.com/engine/reference/builder/#workdir
 #
-# First make sure storage exists + is owned by 1000:1000, then go back
-# to just /gotosocial, where we'll run from
+# First make sure storage exists + is owned by gotosocial:gotosocial, then
+# go back to just /gotosocial, where we'll run from
 WORKDIR "/gotosocial/storage"
 WORKDIR "/gotosocial"
 
 # copy the dist binary created by goreleaser or build.sh
-COPY --chown=1000:1000 gotosocial /gotosocial/gotosocial
+COPY --chown=gotosocial:gotosocial gotosocial /gotosocial/gotosocial
 
 # copy over the web directories with templates, assets etc
-COPY --chown=1000:1000 --from=bundler web /gotosocial/web
-COPY --chown=1000:1000 --from=swagger /go/src/github.com/superseriousbusiness/gotosocial/swagger.yaml web/assets/swagger.yaml
+COPY --chown=gotosocial:gotosocial --from=bundler web /gotosocial/web
+COPY --chown=gotosocial:gotosocial --from=swagger /go/src/github.com/superseriousbusiness/gotosocial/swagger.yaml web/assets/swagger.yaml
+
+# switch back to root for entrypoint
+USER root:root
 
 VOLUME [ "/gotosocial/storage" ]
-ENTRYPOINT [ "/gotosocial/gotosocial", "server", "start" ]
+ENTRYPOINT [ "entrypoint.sh" ]
+CMD [ "/gotosocial/gotosocial", "server", "start" ]

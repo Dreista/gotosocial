@@ -10,6 +10,8 @@ before:
   - yarn --cwd ./web/source install
   - yarn --cwd ./web/source ts-patch install # https://typia.io/docs/setup/#manual-setup
   - yarn --cwd ./web/source build
+  # Install tonistiigi/binfmt
+  - docker run --privileged --rm tonistiigi/binfmt --install arm,arm64
 builds:
   # https://goreleaser.com/customization/build/
   -
@@ -71,6 +73,7 @@ dockers:
     - go.sum
     - cmd
     - internal
+    - entrypoint.sh
   -
     use: buildx
     goos: linux
@@ -91,6 +94,7 @@ dockers:
     - go.sum
     - cmd
     - internal
+    - entrypoint.sh
   -
     use: buildx
     goos: linux
@@ -112,6 +116,7 @@ dockers:
     - go.sum
     - cmd
     - internal
+    - entrypoint.sh
   -
     use: buildx
     goos: linux
@@ -133,6 +138,7 @@ dockers:
     - go.sum
     - cmd
     - internal
+    - entrypoint.sh
 docker_manifests:
   - name_template: superseriousbusiness/{{ .ProjectName }}:{{ .Version }}
     image_templates:
