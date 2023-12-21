@@ -11,7 +11,7 @@ before:
   - yarn --cwd ./web/source ts-patch install # https://typia.io/docs/setup/#manual-setup
   - yarn --cwd ./web/source build
   # Install tonistiigi/binfmt
-  - docker run --privileged --rm tonistiigi/binfmt --install arm,arm64
+  - docker run --privileged --rm tonistiigi/binfmt --install arm,arm64,amd64
 builds:
   # https://goreleaser.com/customization/build/
   -
