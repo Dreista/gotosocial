@@ -4,10 +4,11 @@ services:
   gotosocial:
     image: superseriousbusiness/gotosocial:latest
     container_name: gotosocial
-    user: 1000:1000
     networks:
       - gotosocial
     environment:
+      GTS_UID: 1000
+      GTS_GID: 1000
       GTS_HOST: example.org
       GTS_DB_TYPE: sqlite
       GTS_DB_ADDRESS: /gotosocial/storage/sqlite.db
